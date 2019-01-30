@@ -137,7 +137,8 @@ function addressToScript (
   address: string,
   blockHeight: number,
   blockHash: string,
-  data: string
+  data: string,
+  isTestnetMultisig: boolean = false
 ): string {
   // NULL transaction
   if (address === null || address === undefined) {
@@ -145,7 +146,7 @@ function addressToScript (
   }
 
   // P2SH replay starts with a 's', or 'r'
-  if (address[1] === 's' || address[1] === 'r') {
+  if (address[1] === 's' || address[1] === 'r' || (address[1] === 't' && !isTestnetMultisig)) {
     return mkScriptHashReplayScript(address, blockHeight, blockHash)
   }
 
@@ -342,9 +343,16 @@ function createRawTx (
     }
   })
   txObj.outs = recipients.map(function (o) {
-    return {
-      script: addressToScript(o.address, blockHeight, blockHash, o.data),
-      satoshis: o.satoshis
+    if (o.isTestnetMultisig) {
+      return {
+        script: addressToScript(o.address, blockHeight, blockHash, o.data, o.isTestnetMultisig),
+        satoshis: o.satoshis
+      }
+    } else {
+      return {
+        script: addressToScript(o.address, blockHeight, blockHash, o.data),
+        satoshis: o.satoshis
+      }
     }
   })
 
